@@ -9,12 +9,14 @@ class Division():
     battalions: List[Battalion]
     hp:float
     org:float
+    width:int
 
     def __init__(self, name, battalions):
         self.name = name
         self.battalions = battalions
-        self.org = np.mean([getattr(b, "org") for b in self.battalions])
-        self.hp = sum(getattr(b, "org") for b in self.battalions)
+        self.org = np.mean([getattr(b, "max_org") for b in self.battalions])
+        self.hp = sum(getattr(b, "max_org") for b in self.battalions)
+        self.width = sum(getattr(b, "width") for b in self.battalions)
     
     def _total_stat(self, stat: str) -> float:
         return sum(getattr(b, stat) for b in self.battalions)
@@ -72,6 +74,7 @@ class Division():
     def is_alive(self) -> bool:
         return self.org > 0 and self.hp > 0
 
-    
+
+
 
 

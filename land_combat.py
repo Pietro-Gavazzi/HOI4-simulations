@@ -1,23 +1,79 @@
 from divisions import *
 from battalions import *
-from utils import round, dice
+from terrain import *
+from utils import *
 
 import numpy as np
 import random
 
+def pop_div(x: List[Division]) -> Division:
+    elem = random.choice(x)
+    x.remove(elem)
+    return elem
+
+
 
 class CombatScenario():
-    def __init__(self, attacker_div, defender_div):
-        self.attacker = attacker_div
-        self.defender = defender_div
+
+    attackers_reserve:List[Division]
+    defenders_reserve = List[Division]
+    terrain=Terrain
+    width = int
+    max_width = int
+    attackers_active = List[Division]
+    defenders_active = List[Division]
+    attackers_width = int
+    defenders_width = int
+
+    def __init__(self, attacker_divs:list, defender_divs:list, terrain:Terrain):
+        self.attackers_reserve = attacker_divs
+        self.defenders_reserve = defender_divs
+        self.terrain=terrain
+        self.width = self.terrain.base_width
+        self.max_width = self.width*(4/3)
+        self.attackers_active = []
+        self.defenders_active = []
+        self.attackers_width = 0
+        self.defenders_width = 0
 
 
+
+    def _push_divisions_in_combat(self):
+        # pull division out of reserve
+        while self.attackers_reserve:
+            at_div = pop_div(self.attackers_reserve)
+
+            if (self.attackers_width+at_div.width)<self.max_width:
+                self.attackers_width += at_div.width
+                self.attackers_active.append(at_div)
+            else:
+                self.attackers_reserve.append(at_div)
+                break
+
+        while self.defenders_reserve:
+            def_div = pop_div(self.defenders_reserve)
+            if (self.defenders_width+def_div.width)<self.max_width:
+                self.defenders_width += def_div.width
+                self.defenders_active.append(def_div)
+            else:
+                self.defenders_reserve.append(def_div)
+                break
+
+
+
+
+    def simulate_combat(self) -> str:
+        self._push_divisions_in_combat()
+
+        return
+    
 
     
 
-    def simulate_combat(self, hours: int = 200*24) -> str:
-       
-        for hour in range(hours):
+        while self.attackers_active and self.defenders_active:
+
+
+
             if not (self.attacker.is_alive() and self.defender.is_alive()):
                 break
 
@@ -44,3 +100,21 @@ class CombatScenario():
             return "Defender wins"
         else:
             return "Stalemate"
+
+
+
+def main():
+    terrain = plain
+    # Division examples
+    division_1 = Division("Infantry Division", [inf]*10 + [art]*0)
+    division_2 = Division("Tank Division", [light_tank]*1 + [inf]*0)
+
+    division_1.get_armour()
+    division_1.get_piercing()
+    # Combat scenario
+    battle = CombatScenario([division_2], [division_1], terrain)
+    result = battle.simulate_combat()
+    print(result)
+
+if __name__=="__main__":
+    main()

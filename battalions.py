@@ -11,7 +11,7 @@ class Battalion:
     armour:float
     piercing:float
     hp: float
-    org: float
+    max_org: float
     hardness: float
     width: float
     type: str  # "infantry", "armor", "artillery", etc.
@@ -26,7 +26,7 @@ inf = Battalion("Infantry",
                 piercing = 1,
                 armour = 0,
                 hp=25, 
-                org=60, 
+                max_org=60, 
                 hardness=0, 
                 width=2,
                 type="infantry"
@@ -39,7 +39,7 @@ art = Battalion("Artillery",
                 piercing = 5,
                 armour = 0,
                 hp=.6, 
-                org=0, 
+                max_org=0, 
                 hardness=0, 
                 width=3, 
                 type="artillery"
@@ -52,11 +52,12 @@ motorised = Battalion("Motorised",
                 piercing = 1,
                 armour = 0,
                 hp=25, 
-                org=60, 
+                max_org=60, 
                 hardness=.2, 
                 width=2, 
                 type="mobile"
                 )
+
 light_tank = Battalion("Light Tank", 
                        soft_attack=13, 
                        hard_attack=4, 
@@ -65,7 +66,7 @@ light_tank = Battalion("Light Tank",
                        piercing = 10,
                        armour = 10,
                        hp=2, 
-                       org=10,  
+                       max_org=10,  
                        hardness=.8, 
                        width=2, 
                        type="armor"
