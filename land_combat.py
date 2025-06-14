@@ -3,6 +3,8 @@ from battalions import *
 from terrain import *
 from utils import *
 
+
+
 import numpy as np
 import random
 
@@ -14,6 +16,7 @@ def pop_div(x: List[Division]) -> Division:
 
 
 class CombatScenario():
+
 
     attackers_reserve:List[Division]
     defenders_reserve = List[Division]
@@ -61,42 +64,92 @@ class CombatScenario():
 
 
 
+    def _reinforce_divisions_in_combat(self):
+        # pull division out of reserve
+        while self.attackers_reserve:
+            at_div = pop_div(self.attackers_reserve)
 
+            if (self.attackers_width+at_div.width)<self.max_width:
+                self.attackers_width += at_div.width
+                if random.random()<0.02:
+                    self.attackers_active.append(at_div)
+                else:
+                    self.attackers_reserve.append(at_div)
+            else:
+                self.attackers_reserve.append(at_div)
+                break
+
+        while self.defenders_reserve:
+            def_div = pop_div(self.defenders_reserve)
+            if (self.defenders_width+def_div.width)<self.max_width:
+                self.defenders_width += def_div.width
+                if random.random()<0.02:
+                    self.defenders_active.append(def_div)
+                else:
+                    self.defenders_reserve.append(def_div)
+            else:
+                self.defenders_reserve.append(def_div)
+                break
+
+
+
+    
     def simulate_combat(self) -> str:
+        def distribute_attack(division:Division, ennemy_div_list:List[Division]):
+            target_width = division.get_width()*2
+            targets_list = []
+
+            for ennemy_division in random.sample(ennemy_div_list, len(ennemy_div_list)): 
+                if ennemy_division.get_width() <= target_width:
+                    target_width -= ennemy_division.get_width()
+
+                    priority =(division.get_soft_attack()*(1-ennemy_division.get_hardness()) + division.get_hard_attack()*(ennemy_division.get_hardness())*1.2)*(1-ennemy_division.get_org_ratio()/4)*(1-0.5*(division.get_piercing()<ennemy_division.get_armour()))
+                    targets_list.append((ennemy_division, priority))
+                    targets_list = sorted(targets_list, key = lambda x:x[1])
+
+            if not targets_list:
+                targets_list.append((random.choice(ennemy_div_list), 0))
+
+            targets_list[0][0].add_attack(Attack(division.get_soft_attack()*0.35, division.get_hard_attack()*0.35, division.get_piercing(), division.get_armour()))
+            for (target_div, _) in targets_list:
+                target_div.add_attack(Attack(division.get_soft_attack()*0.65/len(targets_list), division.get_hard_attack()*0.65/len(targets_list), division.get_piercing(), division.get_armour()))
+        
+
         self._push_divisions_in_combat()
 
-        return
-    
-
-    
+   
 
         while self.attackers_active and self.defenders_active:
 
+            for attacker in self.attackers_active:
+                distribute_attack(attacker, self.defenders_active)
+
+            for defender in self.defenders_active:
+                distribute_attack(defender, self.attackers_active)
 
 
-            if not (self.attacker.is_alive() and self.defender.is_alive()):
-                break
+            for attacker in self.attackers_active:
+                attacker.take_damage(is_defender=False)
 
-            # Attacker attacks
-            atk_soft_att = self.attacker._total_stat("soft_attack")
-            atk_hard_att = self.attacker._total_stat("hard_attack")
-            atk_piercing = self.attacker.get_piercing() 
-            atk_armour = self.attacker.get_armour() 
+            for defender in self.defenders_active:
+                defender.take_damage(is_defender=True)
 
-            self.defender.take_damage(atk_soft_att, atk_hard_att, atk_piercing, atk_armour, is_defender=True)
+            for attacker in self.attackers_active:
+                if not attacker.is_alive():
+                    self.attackers_active.remove(attacker)
+            
+            for defender in self.defenders_active:
+                if not self.defenders_active:
+                    self.defenders_active.remove(defender)
 
-            # Defender counters
-            def_soft_att = self.defender._total_stat("soft_attack")
-            def_hard_att = self.defender._total_stat("hard_attack")
-            def_piercing = self.defender.get_piercing() 
-            def_armour = self.defender.get_armour() 
+            self._reinforce_divisions_in_combat()
 
-            self.attacker.take_damage(def_soft_att, def_hard_att, def_piercing, def_armour, is_defender=False)
+
 
         # Determine winner
-        if self.attacker.is_alive() and not self.defender.is_alive():
+        if self.attackers_active and not self.defenders_active:
             return "Attacker wins"
-        elif self.defender.is_alive() and not self.attacker.is_alive():
+        elif self.defenders_active and not self.attackers_active:
             return "Defender wins"
         else:
             return "Stalemate"
